@@ -22,6 +22,7 @@ def export_layout_matplotlib(histograms: Dict[str, Hist1DData], layout: LayoutMo
         ax.set_xscale("log" if pad.logx else "linear")
         ax.set_yscale("log" if pad.logy else "linear")
 
+        plotted = 0
         for obj in pad.objects:
             hist = histograms.get(obj.root_object_path)
             if hist is None:
@@ -38,7 +39,8 @@ def export_layout_matplotlib(histograms: Dict[str, Hist1DData], layout: LayoutMo
                 markersize=marker_size,
                 label=obj.legend_label or obj.root_object_path,
             )
-        if pad.objects:
+            plotted += 1
+        if plotted > 0:
             ax.legend(loc="upper left")
 
         for label in [x for x in layout.labels if x.target_pad == pad.pad_id]:

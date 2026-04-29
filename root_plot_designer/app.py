@@ -116,12 +116,23 @@ def load_layout(contents):
     l = LayoutModel.from_dict(load_template(raw))
     return l.canvas.width, l.canvas.height, l.to_dict()
 
-@app.callback(Output("download-export", "data"), Input("export-png", "n_clicks"), Input("export-pdf", "n_clicks"), Input("export-svg", "n_clicks"), State("layout-store", "data"), State("loaded-hists", "data"), prevent_initial_call=True)
-def export(p1,p2,p3,layout_raw,loaded):
+@app.callback(Output("download-export", "data"), Input("export-png", "n_clicks"), Input("export-pdf", "n_clicks"), Input("export-svg", "n_clicks"), State("layout-store", "data"), State("loaded-hists", "data"), State("root-path", "value"), prevent_initial_call=True)
+def export(p1,p2,p3,layout_raw,loaded,root_path):
     ext = {"export-png":"png","export-pdf":"pdf","export-svg":"svg"}[dash.ctx.triggered_id]
+    layout = LayoutModel.from_dict(layout_raw)
     hists = {k:Hist1DData.from_payload(v) for k,v in (loaded or {}).items()}
+    required_paths = {obj.root_object_path for pad in layout.pads for obj in pad.objects}
+    if root_path:
+        for path in required_paths:
+            if path not in hists:
+                try:
+                    hists[path] = load_th1(root_path, path)
+                except Exception:
+                    pass
+    if not any(path in hists for path in required_paths):
+        raise dash.exceptions.PreventUpdate
     out = Path('exports')/f'layout_export.{ext}'
-    export_layout_matplotlib(hists, LayoutModel.from_dict(layout_raw), str(out))
+    export_layout_matplotlib(hists, layout, str(out))
     return dcc.send_file(str(out))
 
 @app.callback(Output("download-script", "data"), Input("export-script", "n_clicks"), State("root-path", "value"), State("layout-store", "data"), prevent_initial_call=True)
