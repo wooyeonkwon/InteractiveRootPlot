@@ -28,6 +28,7 @@ app.layout = html.Div([
     html.Div([html.Label("Canvas width"), dcc.Input(id="canvas-width", type="number", value=800), html.Label("Canvas height"), dcc.Input(id="canvas-height", type="number", value=600)]),
     html.Div([html.Button("Add Pad", id="add-pad"), html.Button("Remove Last Pad", id="rm-pad")]),
     html.Div([html.Label("Pad ID"), dcc.Input(id="pad-id", type="text", value="pad1"), html.Label("Coords x1,y1,x2,y2"), dcc.Input(id="pad-coords", type="text", value="0.0,0.0,1.0,1.0"), dcc.Checklist(options=[{"label":"logx","value":"logx"},{"label":"logy","value":"logy"},{"label":"logz","value":"logz"}], id="pad-logs", value=[])]),
+    html.Div([html.Label("X title"), dcc.Input(id="x-title", type="text"), html.Label("Y title"), dcc.Input(id="y-title", type="text"), html.Label("X min"), dcc.Input(id="x-min", type="number"), html.Label("X max"), dcc.Input(id="x-max", type="number"), html.Label("Y min"), dcc.Input(id="y-min", type="number"), html.Label("Y max"), dcc.Input(id="y-max", type="number")]),
     html.Div([html.Label("Draw option"), dcc.Input(id="draw-option", value="E1"), html.Label("Legend"), dcc.Input(id="legend-label")]),
     html.Button("Assign Selected Object to Pad", id="assign-obj"),
     html.Hr(),
@@ -55,8 +56,8 @@ def load_hist(_, root_path, object_name, loaded):
     loaded[object_name] = hist.to_payload()
     return loaded
 
-@app.callback(Output("layout-store", "data"), Input("add-pad", "n_clicks"), Input("rm-pad", "n_clicks"), Input("assign-obj", "n_clicks"), Input("add-label", "n_clicks"), State("layout-store", "data"), State("pad-id", "value"), State("pad-coords", "value"), State("pad-logs", "value"), State("object-dropdown", "value"), State("draw-option", "value"), State("legend-label", "value"), State("label-text", "value"), State("label-target", "value"), State("label-pos", "value"), State("label-size", "value"), State("label-align", "value"), State("canvas-width", "value"), State("canvas-height", "value"), prevent_initial_call=True)
-def update_layout(a,b,c,d,layout_raw,pad_id,pad_coords,pad_logs,obj,draw_opt,legend,label_text,label_target,label_pos,label_size,label_align,cw,ch):
+@app.callback(Output("layout-store", "data"), Input("add-pad", "n_clicks"), Input("rm-pad", "n_clicks"), Input("assign-obj", "n_clicks"), Input("add-label", "n_clicks"), State("layout-store", "data"), State("pad-id", "value"), State("pad-coords", "value"), State("pad-logs", "value"), State("object-dropdown", "value"), State("draw-option", "value"), State("legend-label", "value"), State("label-text", "value"), State("label-target", "value"), State("label-pos", "value"), State("label-size", "value"), State("label-align", "value"), State("canvas-width", "value"), State("canvas-height", "value"), State("x-title", "value"), State("y-title", "value"), State("x-min", "value"), State("x-max", "value"), State("y-min", "value"), State("y-max", "value"), prevent_initial_call=True)
+def update_layout(a,b,c,d,layout_raw,pad_id,pad_coords,pad_logs,obj,draw_opt,legend,label_text,label_target,label_pos,label_size,label_align,cw,ch,x_title,y_title,x_min,x_max,y_min,y_max):
     layout = LayoutModel.from_dict(layout_raw)
     layout.canvas.width = int(cw or 800)
     layout.canvas.height = int(ch or 600)
@@ -74,6 +75,10 @@ def update_layout(a,b,c,d,layout_raw,pad_id,pad_coords,pad_logs,obj,draw_opt,leg
         p.coords = coords
         logs = set(pad_logs or [])
         p.logx, p.logy, p.logz = ("logx" in logs), ("logy" in logs), ("logz" in logs)
+        p.x_title = x_title or ""
+        p.y_title = y_title or ""
+        p.x_min, p.x_max = x_min, x_max
+        p.y_min, p.y_max = y_min, y_max
         p.objects.append(PlotObjectConfig(root_object_path=obj, draw_option=draw_opt or "E1", legend_label=legend or obj, style={"line_color": "#1f77b4", "marker_size": 7, "marker_style": "circle"}))
     elif trig == "add-label":
         pos = [float(x.strip()) for x in (label_pos or "0.02,0.98").split(",")]

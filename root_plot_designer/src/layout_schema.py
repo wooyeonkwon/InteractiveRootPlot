@@ -30,6 +30,12 @@ class PadConfig:
     logx: bool = False
     logy: bool = False
     logz: bool = False
+    x_title: str = ""
+    y_title: str = ""
+    x_min: Optional[float] = None
+    x_max: Optional[float] = None
+    y_min: Optional[float] = None
+    y_max: Optional[float] = None
     objects: List[PlotObjectConfig] = field(default_factory=list)
 
 
@@ -76,6 +82,12 @@ class LayoutModel:
                     logx=bool(p.get("logx", False)),
                     logy=bool(p.get("logy", False)),
                     logz=bool(p.get("logz", False)),
+                    x_title=p.get("x_title", ""),
+                    y_title=p.get("y_title", ""),
+                    x_min=p.get("x_min"),
+                    x_max=p.get("x_max"),
+                    y_min=p.get("y_min"),
+                    y_max=p.get("y_max"),
                     objects=objs,
                 )
             )

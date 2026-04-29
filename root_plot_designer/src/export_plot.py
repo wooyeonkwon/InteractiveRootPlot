@@ -19,6 +19,14 @@ def _render_layout_figure(histograms: Dict[str, Hist1DData], layout: LayoutModel
         ax.set_ymargin(pad.margin_y)
         ax.set_xscale("log" if pad.logx else "linear")
         ax.set_yscale("log" if pad.logy else "linear")
+        if pad.x_title:
+            ax.set_xlabel(pad.x_title)
+        if pad.y_title:
+            ax.set_ylabel(pad.y_title)
+        if pad.x_min is not None and pad.x_max is not None:
+            ax.set_xlim(pad.x_min, pad.x_max)
+        if pad.y_min is not None and pad.y_max is not None:
+            ax.set_ylim(pad.y_min, pad.y_max)
 
         plotted = 0
         for obj in pad.objects:
