@@ -6,12 +6,11 @@ from pathlib import Path
 
 import dash
 from dash import Dash, Input, Output, State, dcc, html
-import plotly.graph_objects as go
 
-from src.export_plot import build_repro_script, export_layout_matplotlib
+from src.export_plot import build_repro_script, export_layout_matplotlib, render_layout_png_bytes
 from src.io_root import list_objects, load_th1
 from src.layout_schema import LabelConfig, LayoutModel, PadConfig, PlotObjectConfig
-from src.plot_model import Hist1DData, marker_symbol_map
+from src.plot_model import Hist1DData
 from src.template_io import dump_template, load_template
 
 app = Dash(__name__)
@@ -34,7 +33,7 @@ app.layout = html.Div([
     html.Hr(),
     html.Div([html.Label("Label text"), dcc.Input(id="label-text", value="CMS Preliminary"), html.Label("Target pad"), dcc.Input(id="label-target", value="pad1"), html.Label("Position x,y"), dcc.Input(id="label-pos", value="0.02,0.98"), html.Label("Font size"), dcc.Input(id="label-size", type="number", value=11), html.Label("Align"), dcc.Dropdown(id="label-align", options=[{"label":x,"value":x} for x in ["left","center","right"]], value="left")]),
     html.Button("Add Label", id="add-label"),
-    dcc.Graph(id="plot-preview", style={"height": "650px"}),
+    html.Img(id="plot-preview", style={"maxWidth": "100%", "border": "1px solid #ddd"}),
     html.Hr(),
     html.Button("Download layout.yaml", id="save-layout-btn"), dcc.Download(id="download-layout"),
     dcc.Upload(id="upload-layout", children=html.Button("Load layout.yaml/json"), multiple=False),
@@ -81,24 +80,13 @@ def update_layout(a,b,c,d,layout_raw,pad_id,pad_coords,pad_logs,obj,draw_opt,leg
         layout.labels.append(LabelConfig(text=label_text or "", target_pad=label_target or "pad1", position=pos, font_size=float(label_size or 11), alignment=label_align or "left"))
     return layout.to_dict()
 
-@app.callback(Output("plot-preview", "figure"), Input("loaded-hists", "data"), Input("layout-store", "data"))
+@app.callback(Output("plot-preview", "src"), Input("loaded-hists", "data"), Input("layout-store", "data"))
 def preview(loaded, layout_raw):
-    fig = go.Figure()
     layout = LayoutModel.from_dict(layout_raw)
-    loaded = loaded or {}
-    for pad in layout.pads:
-        for obj in pad.objects:
-            payload = loaded.get(obj.root_object_path)
-            if not payload:
-                continue
-            h = Hist1DData.from_payload(payload)
-            centers = 0.5*(h.edges[:-1]+h.edges[1:])
-            fig.add_trace(go.Scatter(x=centers,y=h.values,error_y={"type":"data","array":h.errors,"visible":True},mode="markers+lines",name=obj.legend_label or obj.root_object_path, marker={"symbol": marker_symbol_map(obj.style.get("marker_style","circle")), "size": obj.style.get("marker_size",7), "color": obj.style.get("line_color", "#1f77b4")}, line={"color": obj.style.get("line_color", "#1f77b4")}))
-    anns=[]
-    for l in layout.labels:
-        anns.append({"x":l.position[0],"y":l.position[1],"xref":"paper","yref":"paper","text":l.text,"showarrow":False,"font":{"size":l.font_size},"xanchor":l.alignment})
-    fig.update_layout(template="plotly_white", annotations=anns)
-    return fig
+    hists = {k: Hist1DData.from_payload(v) for k, v in (loaded or {}).items()}
+    png_bytes = render_layout_png_bytes(hists, layout)
+    b64 = base64.b64encode(png_bytes).decode("ascii")
+    return f"data:image/png;base64,{b64}"
 
 @app.callback(Output("download-layout", "data"), Input("save-layout-btn", "n_clicks"), State("layout-store", "data"), prevent_initial_call=True)
 def save_layout(_, data):

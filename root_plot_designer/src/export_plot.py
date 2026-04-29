@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from io import BytesIO
 from typing import Dict
 
 import matplotlib.pyplot as plt
@@ -9,10 +10,7 @@ from .layout_schema import LayoutModel
 from .plot_model import Hist1DData
 
 
-def export_layout_matplotlib(histograms: Dict[str, Hist1DData], layout: LayoutModel, out_path: str) -> str:
-    out = Path(out_path)
-    out.parent.mkdir(parents=True, exist_ok=True)
-
+def _render_layout_figure(histograms: Dict[str, Hist1DData], layout: LayoutModel):
     fig = plt.figure(figsize=(layout.canvas.width / 100.0, layout.canvas.height / 100.0), dpi=100)
     for pad in layout.pads:
         x1, y1, x2, y2 = pad.coords
@@ -47,6 +45,21 @@ def export_layout_matplotlib(histograms: Dict[str, Hist1DData], layout: LayoutMo
             ha = {"left": "left", "center": "center", "right": "right"}.get(label.alignment, "left")
             ax.text(label.position[0], label.position[1], label.text, transform=ax.transAxes, fontsize=label.font_size, ha=ha, va="top")
 
+    return fig
+
+
+def render_layout_png_bytes(histograms: Dict[str, Hist1DData], layout: LayoutModel) -> bytes:
+    fig = _render_layout_figure(histograms, layout)
+    buf = BytesIO()
+    fig.savefig(buf, format="png")
+    plt.close(fig)
+    return buf.getvalue()
+
+
+def export_layout_matplotlib(histograms: Dict[str, Hist1DData], layout: LayoutModel, out_path: str) -> str:
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fig = _render_layout_figure(histograms, layout)
     fig.savefig(out)
     plt.close(fig)
     return str(out)
