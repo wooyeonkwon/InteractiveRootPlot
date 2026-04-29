@@ -10,6 +10,21 @@ class PlotObjectConfig:
     draw_option: str = "E1"
     legend_label: str = ""
     style: Dict[str, Any] = field(default_factory=dict)
+    normalization: str = "none"
+    scale_factor: float = 1.0
+    rebin_factor: int = 1
+    rebin_edges: List[float] = field(default_factory=list)
+    visible: bool = True
+
+
+@dataclass
+class LegendConfig:
+    show: bool = True
+    position: List[float] = field(default_factory=lambda: [0.62, 0.68, 0.90, 0.90])
+    text_size: float = 10.0
+    border: bool = False
+    fill_transparent: bool = True
+    entry_order: str = "draw"  # draw | reverse
 
 
 @dataclass
@@ -37,6 +52,11 @@ class PadConfig:
     y_min: Optional[float] = None
     y_max: Optional[float] = None
     objects: List[PlotObjectConfig] = field(default_factory=list)
+    legend: LegendConfig = field(default_factory=LegendConfig)
+    ratio_enabled: bool = False
+    ratio_reference: str = ""
+    ratio_y_min: float = 0.5
+    ratio_y_max: float = 1.5
 
 
 @dataclass
@@ -70,6 +90,11 @@ class LayoutModel:
                     draw_option=o.get("draw_option", "E1"),
                     legend_label=o.get("legend_label", ""),
                     style=o.get("style", {}) or {},
+                    normalization=o.get("normalization", "none"),
+                    scale_factor=float(o.get("scale_factor", 1.0)),
+                    rebin_factor=int(o.get("rebin_factor", 1)),
+                    rebin_edges=o.get("rebin_edges", []) or [],
+                    visible=bool(o.get("visible", True)),
                 )
                 for o in p.get("objects", [])
             ]
@@ -89,6 +114,18 @@ class LayoutModel:
                     y_min=p.get("y_min"),
                     y_max=p.get("y_max"),
                     objects=objs,
+                    legend=LegendConfig(
+                        show=bool((p.get("legend") or {}).get("show", True)),
+                        position=(p.get("legend") or {}).get("position", [0.62, 0.68, 0.90, 0.90]),
+                        text_size=float((p.get("legend") or {}).get("text_size", 10.0)),
+                        border=bool((p.get("legend") or {}).get("border", False)),
+                        fill_transparent=bool((p.get("legend") or {}).get("fill_transparent", True)),
+                        entry_order=(p.get("legend") or {}).get("entry_order", "draw"),
+                    ),
+                    ratio_enabled=bool(p.get("ratio_enabled", False)),
+                    ratio_reference=p.get("ratio_reference", ""),
+                    ratio_y_min=float(p.get("ratio_y_min", 0.5)),
+                    ratio_y_max=float(p.get("ratio_y_max", 1.5)),
                 )
             )
         if not pads:
