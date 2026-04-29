@@ -11,6 +11,18 @@ from .layout_schema import LayoutModel
 from .plot_model import Hist1DData
 
 
+def _to_mpl_marker(marker_style: str) -> str:
+    mapping = {
+        "circle": "o",
+        "square": "s",
+        "diamond": "D",
+        "cross": "+",
+        "x": "x",
+        "triangle-up": "^",
+    }
+    return mapping.get(marker_style, marker_style if marker_style else "o")
+
+
 def _apply_transform(hist: Hist1DData, obj):
     edges, values, errors = hist.edges.copy(), hist.values.copy(), hist.errors.copy()
     if obj.rebin_edges:
@@ -82,13 +94,14 @@ def _render_layout_figure(histograms: Dict[str, Hist1DData], layout: LayoutModel
             edges, values, errors = _apply_transform(hist, obj)
             centers = 0.5 * (edges[1:] + edges[:-1])
             color = obj.style.get("line_color", "#1f77b4")
-            marker = obj.style.get("marker_style", "o")
+            marker = _to_mpl_marker(obj.style.get("marker_style", "o"))
             h = ax.errorbar(
                 centers,
                 values,
                 yerr=errors,
-                fmt=marker,
+                fmt="none",
                 color=color,
+                marker=marker,
                 markersize=obj.style.get("marker_size", 7),
                 linewidth=obj.style.get("line_width", 1.5),
                 linestyle=obj.style.get("line_style", "-"),
