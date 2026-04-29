@@ -27,7 +27,7 @@ app.layout = html.Div([
     html.Hr(),
     html.Div([html.Label("Canvas width"), dcc.Input(id="canvas-width", type="number", value=800), html.Label("Canvas height"), dcc.Input(id="canvas-height", type="number", value=600)]),
     html.Div([html.Button("Add Pad", id="add-pad"), html.Button("Remove Last Pad", id="rm-pad")]),
-    html.Div([html.Label("Pad ID"), dcc.Input(id="pad-id", type="text", value="pad1"), html.Label("Coords x1,y1,x2,y2"), dcc.Input(id="pad-coords", type="text", value="0.0,0.0,1.0,1.0"), dcc.Checklist(options=[{"label":"logx","value":"logx"},{"label":"logy","value":"logy"},{"label":"logz","value":"logz"}], id="pad-logs", value=[])]),
+    html.Div([html.Label("Pad ID"), dcc.Input(id="pad-id", type="text", value="pad1"), html.Label("Coords x1,y1,x2,y2"), dcc.Input(id="pad-coords", type="text", value="0.12,0.12,0.95,0.92"), dcc.Checklist(options=[{"label":"logx","value":"logx"},{"label":"logy","value":"logy"},{"label":"logz","value":"logz"}], id="pad-logs", value=[])]),
     html.Div([html.Label("X title"), dcc.Input(id="x-title", type="text"), html.Label("Y title"), dcc.Input(id="y-title", type="text"), html.Label("X min"), dcc.Input(id="x-min", type="number"), html.Label("X max"), dcc.Input(id="x-max", type="number"), html.Label("Y min"), dcc.Input(id="y-min", type="number"), html.Label("Y max"), dcc.Input(id="y-max", type="number")]),
     html.Div([html.Label("Draw option"), dcc.Input(id="draw-option", value="E1"), html.Label("Legend"), dcc.Input(id="legend-label")]),
     html.Button("Assign Selected Object to Pad", id="assign-obj"),
@@ -67,7 +67,7 @@ def update_layout(a,b,c,d,layout_raw,pad_id,pad_coords,pad_logs,obj,draw_opt,leg
     elif trig == "rm-pad" and len(layout.pads) > 1:
         layout.pads.pop()
     elif trig == "assign-obj" and obj:
-        coords = [float(x.strip()) for x in (pad_coords or "0,0,1,1").split(",")]
+        coords = [float(x.strip()) for x in (pad_coords or "0.12,0.12,0.95,0.92").split(",")]
         p = next((x for x in layout.pads if x.pad_id == pad_id), None)
         if p is None:
             p = PadConfig(pad_id=pad_id or f"pad{len(layout.pads)+1}")

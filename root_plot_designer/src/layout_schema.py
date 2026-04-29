@@ -24,7 +24,7 @@ class LabelConfig:
 @dataclass
 class PadConfig:
     pad_id: str
-    coords: List[float] = field(default_factory=lambda: [0.0, 0.0, 1.0, 1.0])
+    coords: List[float] = field(default_factory=lambda: [0.12, 0.12, 0.95, 0.92])
     margin_x: float = 0.12
     margin_y: float = 0.10
     logx: bool = False
@@ -76,7 +76,7 @@ class LayoutModel:
             pads.append(
                 PadConfig(
                     pad_id=p.get("pad_id", f"pad{i}"),
-                    coords=p.get("coords", [0.0, 0.0, 1.0, 1.0]),
+                    coords=p.get("coords", [0.12, 0.12, 0.95, 0.92]),
                     margin_x=float(p.get("margin_x", 0.12)),
                     margin_y=float(p.get("margin_y", 0.10)),
                     logx=bool(p.get("logx", False)),

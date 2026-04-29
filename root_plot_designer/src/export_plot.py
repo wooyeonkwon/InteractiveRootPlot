@@ -13,7 +13,11 @@ from .plot_model import Hist1DData
 def _render_layout_figure(histograms: Dict[str, Hist1DData], layout: LayoutModel):
     fig = plt.figure(figsize=(layout.canvas.width / 100.0, layout.canvas.height / 100.0), dpi=100)
     for pad in layout.pads:
+        if len(pad.coords) != 4:
+            continue
         x1, y1, x2, y2 = pad.coords
+        if x2 <= x1 or y2 <= y1:
+            continue
         ax = fig.add_axes([x1, y1, x2 - x1, y2 - y1])
         ax.set_xmargin(pad.margin_x)
         ax.set_ymargin(pad.margin_y)
