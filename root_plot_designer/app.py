@@ -104,7 +104,13 @@ def preview(loaded, layout_raw):
 def save_layout(_, data):
     return dict(content=dump_template(data, "yaml"), filename="layout.yaml")
 
-@app.callback(Output("canvas-width", "value"), Output("canvas-height", "value"), Input("upload-layout", "contents"), Output("layout-store", "data"), prevent_initial_call=True)
+@app.callback(
+    Output("canvas-width", "value"),
+    Output("canvas-height", "value"),
+    Output("layout-store", "data"),
+    Input("upload-layout", "contents"),
+    prevent_initial_call=True,
+)
 def load_layout(contents):
     raw = base64.b64decode(contents.split(',',1)[1]).decode('utf-8')
     l = LayoutModel.from_dict(load_template(raw))
