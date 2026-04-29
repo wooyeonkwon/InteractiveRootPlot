@@ -21,8 +21,8 @@ app.layout = html.Div([
     dcc.Store(id="loaded-hists", data={}),
     dcc.Store(id="layout-store", data=LayoutModel().to_dict()),
     html.Div([html.Label("ROOT file path"), dcc.Input(id="root-path", type="text", style={"width": "60%"}), html.Button("Scan Objects", id="scan-btn")]),
-    dcc.Dropdown(id="object-dropdown", placeholder="Select TH1 object"),
-    html.Button("Load TH1", id="load-btn"),
+    dcc.Dropdown(id="object-dropdown", placeholder="Select ROOT object"),
+    html.Button("Load Object", id="load-btn"),
     html.Div(id="status"),
     html.Hr(),
     html.Div([html.Label("Canvas width"), dcc.Input(id="canvas-width", type="number", value=800), html.Label("Canvas height"), dcc.Input(id="canvas-height", type="number", value=600)]),
@@ -45,7 +45,7 @@ app.layout = html.Div([
 @app.callback(Output("object-dropdown", "options"), Input("scan-btn", "n_clicks"), State("root-path", "value"), prevent_initial_call=True)
 def scan(_, root_path):
     metas = list_objects(root_path) if root_path else []
-    return [{"label": f"{m.name} [{m.class_name}]", "value": m.name} for m in metas if m.class_name.startswith("TH1")]
+    return [{"label": f"{m.name} [{m.class_name}]", "value": m.name} for m in metas]
 
 @app.callback(Output("loaded-hists", "data"), Input("load-btn", "n_clicks"), State("root-path", "value"), State("object-dropdown", "value"), State("loaded-hists", "data"), prevent_initial_call=True)
 def load_hist(_, root_path, object_name, loaded):
