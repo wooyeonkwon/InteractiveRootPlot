@@ -69,13 +69,26 @@ def _render_layout_figure(histograms: Dict[str, Hist1DData], layout: LayoutModel
         x1, y1, x2, y2 = pad.coords
         if x2 <= x1 or y2 <= y1:
             continue
-        ax = fig.add_axes([x1, y1, x2 - x1, y2 - y1])
+        ratio_ax = None
+        if pad.ratio_enabled:
+            h = (y2 - y1)
+            ratio_h = 0.28 * h
+            main_h = h - ratio_h - 0.01
+            ax = fig.add_axes([x1, y1 + ratio_h + 0.01, x2 - x1, main_h])
+            ratio_ax = fig.add_axes([x1, y1, x2 - x1, ratio_h], sharex=ax)
+            ax.tick_params(labelbottom=False)
+            ratio_ax.set_ylabel("Ratio")
+            ratio_ax.set_ylim(pad.ratio_y_min, pad.ratio_y_max)
+        else:
+            ax = fig.add_axes([x1, y1, x2 - x1, y2 - y1])
         ax.set_xmargin(pad.margin_x)
         ax.set_ymargin(pad.margin_y)
         ax.set_xscale("log" if pad.logx else "linear")
         ax.set_yscale("log" if pad.logy else "linear")
-        if pad.x_title:
+        if pad.x_title and ratio_ax is None:
             ax.set_xlabel(pad.x_title)
+        if pad.x_title and ratio_ax is not None:
+            ratio_ax.set_xlabel(pad.x_title)
         if pad.y_title:
             ax.set_ylabel(pad.y_title)
         if pad.x_min is not None and pad.x_max is not None:
@@ -85,6 +98,7 @@ def _render_layout_figure(histograms: Dict[str, Hist1DData], layout: LayoutModel
 
         ymins, ymaxs = [], []
         legend_handles = []
+        transformed = {}
         for obj in pad.objects:
             if not obj.visible:
                 continue
@@ -92,6 +106,7 @@ def _render_layout_figure(histograms: Dict[str, Hist1DData], layout: LayoutModel
             if hist is None:
                 continue
             edges, values, errors = _apply_transform(hist, obj)
+            transformed[obj.root_object_path] = (edges, values, errors, obj)
             centers = 0.5 * (edges[1:] + edges[:-1])
             color = obj.style.get("line_color", "#1f77b4")
             marker = _to_mpl_marker(obj.style.get("marker_style", "o"))
@@ -117,6 +132,27 @@ def _render_layout_figure(histograms: Dict[str, Hist1DData], layout: LayoutModel
             if len(pos):
                 ymins.append(float(pos.min()))
                 ymaxs.append(float(pos.max()))
+            if ratio_ax is not None and pad.ratio_reference and obj.root_object_path != pad.ratio_reference:
+                ref = transformed.get(pad.ratio_reference)
+                if ref is not None and len(ref[1]) == len(values):
+                    ref_values = ref[1]
+                    ref_errors = ref[2]
+                    safe = ref_values != 0
+                    ratio = np.zeros_like(values, dtype=float)
+                    ratio_err = np.zeros_like(errors, dtype=float)
+                    ratio[safe] = values[safe] / ref_values[safe]
+                    ratio_err[safe] = np.sqrt((errors[safe] / ref_values[safe]) ** 2 + ((values[safe] * ref_errors[safe]) / (ref_values[safe] ** 2)) ** 2)
+                    ratio_ax.errorbar(
+                        centers[safe],
+                        ratio[safe],
+                        yerr=ratio_err[safe],
+                        fmt="none",
+                        marker=marker,
+                        color=color,
+                        markersize=obj.style.get("marker_size", 5),
+                        linewidth=obj.style.get("line_width", 1.2),
+                        linestyle=obj.style.get("line_style", "-"),
+                    )
         if ymins and ymaxs and (pad.y_min is None or pad.y_max is None):
             ymin = min(ymins)
             ymax = max(ymaxs)

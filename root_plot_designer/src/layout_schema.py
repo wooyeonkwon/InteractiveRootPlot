@@ -53,6 +53,10 @@ class PadConfig:
     y_max: Optional[float] = None
     objects: List[PlotObjectConfig] = field(default_factory=list)
     legend: LegendConfig = field(default_factory=LegendConfig)
+    ratio_enabled: bool = False
+    ratio_reference: str = ""
+    ratio_y_min: float = 0.5
+    ratio_y_max: float = 1.5
 
 
 @dataclass
@@ -118,6 +122,10 @@ class LayoutModel:
                         fill_transparent=bool((p.get("legend") or {}).get("fill_transparent", True)),
                         entry_order=(p.get("legend") or {}).get("entry_order", "draw"),
                     ),
+                    ratio_enabled=bool(p.get("ratio_enabled", False)),
+                    ratio_reference=p.get("ratio_reference", ""),
+                    ratio_y_min=float(p.get("ratio_y_min", 0.5)),
+                    ratio_y_max=float(p.get("ratio_y_max", 1.5)),
                 )
             )
         if not pads:
